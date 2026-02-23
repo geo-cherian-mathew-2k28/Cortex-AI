@@ -22,9 +22,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 import pypdf
-import docx
-import pandas as pd
-from PIL import Image
+# Lazy import for large/native libs below in functions
+# import docx
+# import pandas as pd
+# from PIL import Image
 from groq import Groq
 
 # Import configuration
@@ -79,6 +80,7 @@ def parse_image(file_path: str) -> ParsedDocument:
         )
 
     try:
+        from PIL import Image
         base64_image = encode_image(file_path)
         img = Image.open(file_path)
         width, height = img.size
@@ -261,12 +263,11 @@ def parse_pdf(file_path: str) -> ParsedDocument:
 
 
 def parse_docx(file_path: str) -> ParsedDocument:
-    """Extract text from a DOCX file."""
+    """Extract text from a Word document."""
+    import docx
     doc = docx.Document(file_path)
-    paragraphs = []
-    for para in doc.paragraphs:
-        if para.text.strip():
-            paragraphs.append(para.text)
+    full_text = [para.text for para in doc.paragraphs if para.text.strip()]
+    content = "\n".join(full_text).strip()
 
     # Tables
     tables_text = []
@@ -277,7 +278,6 @@ def parse_docx(file_path: str) -> ParsedDocument:
             table_rows.append(" | ".join(cells))
         tables_text.append(f"\n[Table {i + 1}]\n" + "\n".join(table_rows))
 
-    content = "\n".join(paragraphs)
     if tables_text:
         content += "\n\n--- Tables ---\n" + "\n".join(tables_text)
 
@@ -290,40 +290,24 @@ def parse_docx(file_path: str) -> ParsedDocument:
 
 
 def parse_csv(file_path: str) -> ParsedDocument:
-    """Extract text from a CSV file."""
-    df = pd.read_csv(file_path)
-    lines = [f"CSV Summary: {len(df)} rows, {len(df.columns)} columns.", f"Columns: {', '.join(df.columns.tolist())}", ""]
-    
-    numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
-    if numeric_cols:
-        lines.append("--- Numeric Summary ---")
-        for col in numeric_cols:
-            lines.append(f"  {col}: range({df[col].min()}, {df[col].max()}), mean={df[col].mean():.2f}")
-    
-    lines.append("\n--- Data (First 200 rows) ---")
-    lines.append(df.head(200).to_string(index=False))
-    
-    return ParsedDocument(
-        filename=Path(file_path).name,
-        file_type="csv",
-        content="\n".join(lines),
-        metadata={"rows": len(df), "cols": len(df.columns)}
-    )
+    """Extract text from a CSV file using built-in csv module."""
+    rows = []
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            reader = csv.reader(f)
+            for i, row in enumerate(reader):
+                if i < 150: # Limit for cloud analysis
+                    rows.append(" | ".join(row))
+                else:
+                    break
+    except Exception:
+        pass
+    content = "\n".join(rows)
+    return ParsedDocument(filename=Path(file_path).name, file_type="csv", content=content or "[Empty CSV]")
 
 def parse_excel(file_path: str) -> ParsedDocument:
-    """Extract text from Excel files."""
-    xls = pd.ExcelFile(file_path)
-    all_content = []
-    for sheet in xls.sheet_names:
-        df = pd.read_excel(xls, sheet_name=sheet)
-        all_content.append(f"Sheet: {sheet}\n{df.head(100).to_string(index=False)}")
-    
-    return ParsedDocument(
-        filename=Path(file_path).name,
-        file_type="xlsx",
-        content="\n\n".join(all_content),
-        metadata={"sheets": xls.sheet_names}
-    )
+    return ParsedDocument(filename=Path(file_path).name, file_type="xlsx", content="[Excel analysis currently limited to local deployment. Please use CSV in the cloud.]")
+
 
 def parse_json(file_path: str) -> ParsedDocument:
     with open(file_path, "r", encoding="utf-8", errors="replace") as f:

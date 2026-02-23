@@ -126,6 +126,10 @@ async def upload_files(
             })
             continue
 
+        # Ensure directory exists before saving
+        from backend.config import ensure_upload_dir
+        ensure_upload_dir()
+        
         # Save file temporarily
         file_path = UPLOAD_DIR / file.filename
         with open(file_path, "wb") as f:

@@ -16,7 +16,9 @@ if os.getenv("VERCEL"):
 else:
     UPLOAD_DIR = BASE_DIR / "uploads"
 
-UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
+# Moved mkdir into the upload logic to prevent import-time errors on certain platforms
+def ensure_upload_dir():
+    UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
 
 # ── API Keys ───────────────────────────────────────────────────────────
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
