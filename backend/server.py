@@ -41,16 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount frontend static files
-FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-try:
-    if FRONTEND_DIR.exists():
-        app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
-    else:
-        logger.warning(f"Frontend directory not found at {FRONTEND_DIR}")
-except Exception as e:
-    logger.error(f"Failed to mount static files: {e}")
-
 # ── Global State (session-based) ───────────────────────────────────────
 sessions: Dict[str, dict] = {}
 
@@ -102,19 +92,14 @@ class ChatResponse(BaseModel):
 #  ROUTES
 # ═══════════════════════════════════════════════════════════════════════
 
-@app.get("/")
-async def root():
-    """Serve the frontend."""
-    index_path = FRONTEND_DIR / "index.html"
-    if index_path.exists():
-        return FileResponse(str(index_path))
-    return {"message": "Cortex AI API is running", "docs": "/docs"}
-
-
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "timestamp": datetime.utcnow().isoformat()}
+    return {
+        "status": "healthy", 
+        "platform": "Cortex AI",
+        "timestamp": datetime.utcnow().isoformat()
+    }
 
 
 # ── File Upload ────────────────────────────────────────────────────────
