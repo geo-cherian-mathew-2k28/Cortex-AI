@@ -18,6 +18,8 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 # ── LLM Configuration ─────────────────────────────────────────────────
 LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
+VISION_MODEL = "llama-3.2-11b-vision-preview"
+TRANSCRIPTION_MODEL = "whisper-large-v3"
 LLM_TEMPERATURE = 0.3
 LLM_MAX_TOKENS = 4096
 
