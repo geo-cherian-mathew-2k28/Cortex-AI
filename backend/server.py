@@ -21,9 +21,8 @@ from backend.config import UPLOAD_DIR, MAX_FILE_SIZE_MB
 from utils.file_parser import parse_file
 from utils.chunker import chunk_text
 from utils.embeddings import VectorStore
-from backend.agent import LexiSenseAgent
 
-logger = logging.getLogger("lexi-sense")
+logger = logging.getLogger("cortex-ai")
 
 # ═══════════════════════════════════════════════════════════════════════
 #  APP INITIALIZATION
@@ -44,8 +43,13 @@ app.add_middleware(
 
 # Mount frontend static files
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
-if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+try:
+    if FRONTEND_DIR.exists():
+        app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+    else:
+        logger.warning(f"Frontend directory not found at {FRONTEND_DIR}")
+except Exception as e:
+    logger.error(f"Failed to mount static files: {e}")
 
 # ── Global State (session-based) ───────────────────────────────────────
 sessions: Dict[str, dict] = {}
@@ -58,6 +62,9 @@ def get_or_create_session(session_id: Optional[str] = None) -> dict:
 
     sid = session_id or str(uuid.uuid4())
     vector_store = VectorStore()
+    
+    # Lazy import to speed up startup
+    from backend.agent import LexiSenseAgent
     agent = LexiSenseAgent(vector_store)
 
     sessions[sid] = {
