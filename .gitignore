@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════
+# Cortex AI – .gitignore
+# ═══════════════════════════════════════════════════════
+
+# ── Python ────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyo
+*.pyd
+
+# ── Virtual Environments ─────────────────────────────
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# ── Uploads (user data, not tracked) ─────────────────
+uploads/
+*.pdf
+*.docx
+
+# ── IDE / Editor ─────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS Files ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ── Python Packaging ─────────────────────────────────
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# ── Node (if any) ────────────────────────────────────
+node_modules/
+
+# ── Logs ─────────────────────────────────────────────
+*.log
+
+# ── Sentence Transformers cache ──────────────────────
+.cache/
+
+# ── Misc ─────────────────────────────────────────────
+*.bak
+*.tmp

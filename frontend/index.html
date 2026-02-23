@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+    <title>Cortex AI | Document Intelligence Platform</title>
+    <meta name="description"
+        content="Enterprise-grade autonomous document intelligence. Upload, analyze, compare, and extract insights from PDFs, DOCX, CSV, and TXT files with AI-powered precision.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=4">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⬡</text></svg>">
+</head>
+
+<body>
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  AMBIENT BACKGROUND                                            -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="ambient-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  MAIN LAYOUT                                                   -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="app-container">
+
+        <!-- ── SIDEBAR EXPAND BUTTON (visible when sidebar is collapsed) ── -->
+        <button class="sidebar-expand-btn" id="sidebarExpandBtn" aria-label="Open sidebar" title="Open sidebar">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </button>
+
+        <!-- ── SIDEBAR ─────────────────────────────────────────────── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-group">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect width="40" height="40" rx="10" fill="url(#logo-grad)" />
+                            <path d="M20 8L30 14v12l-10 6-10-6V14l10-6z" stroke="white" stroke-width="1.8" fill="none"
+                                opacity="0.9" />
+                            <circle cx="20" cy="20" r="5" stroke="white" stroke-width="1.8" fill="none" opacity="0.9" />
+                            <path
+                                d="M20 15v-3M25 17.5l2.5-1.5M25 22.5l2.5 1.5M20 25v3M15 22.5l-2.5 1.5M15 17.5l-2.5-1.5"
+                                stroke="white" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+                            <defs>
+                                <linearGradient id="logo-grad" x1="0" y1="0" x2="40" y2="40">
+                                    <stop stop-color="#6366f1" />
+                                    <stop offset="1" stop-color="#a855f7" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <h1>Cortex AI</h1>
+                        <span class="logo-subtitle">Document Intelligence</span>
+                    </div>
+                </div>
+                <div class="sidebar-header-actions">
+                    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                        title="Collapse sidebar">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M13 4L7 10L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <button class="sidebar-close-mobile" id="sidebarCloseMobile" aria-label="Close sidebar">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upload Section -->
+            <div class="sidebar-section">
+                <h3 class="section-title">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1v10M4 5l4-4 4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M2 11v2a2 2 0 002 2h8a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                    </svg>
+                    Upload Documents
+                </h3>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-zone-content">
+                        <div class="upload-icon-wrapper">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                <path d="M16 4v18M8 12l8-8 8 8" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="upload-arrow" />
+                                <path d="M4 22v4a2 2 0 002 2h20a2 2 0 002-2v-4" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <p class="upload-text">Drop files here or <span class="upload-browse">browse</span></p>
+                        <p class="upload-hint">PDF, DOCX, XLSX, CSV, JSON, TXT, Code & more • Max 25MB</p>
+                    </div>
+                    <input type="file" id="fileInput" multiple hidden>
+                    <div class="upload-progress" id="uploadProgress" style="display:none">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span class="progress-text" id="progressText">Processing...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Uploaded Files -->
+            <div class="sidebar-section sidebar-section-grow">
+                <h3 class="section-title">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <rect x="2" y="1" width="12" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M5 5h6M5 8h6M5 11h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    Documents
+                    <span class="file-count" id="fileCount">0</span>
+                </h3>
+                <div class="file-list" id="fileList">
+                    <div class="empty-state" id="emptyState">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity="0.3">
+                            <rect x="8" y="4" width="32" height="40" rx="4" stroke="currentColor" stroke-width="2" />
+                            <path d="M16 16h16M16 24h12M16 32h8" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                        </svg>
+                        <p>No documents uploaded yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Controls -->
+            <div class="sidebar-footer">
+                <button class="btn btn-ghost btn-sm" id="clearSessionBtn" title="Clear all documents and chat">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 4h12M5 4V2h6v2M6 7v5M10 7v5" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                        <path d="M3 4l1 10a1 1 0 001 1h6a1 1 0 001-1l1-10" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    New Session
+                </button>
+                <div class="sidebar-footer-right">
+                    <button class="btn btn-icon btn-ghost" id="exportChatBtn" title="Export chat history"
+                        style="display:none">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 1v10M4 7l4 4 4-4" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 11v2a2 2 0 002 2h8a2 2 0 002-2v-2" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <div class="session-info">
+                        <span class="session-dot"></span>
+                        <span class="session-text" id="sessionStatus">Ready</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── MAIN CONTENT ────────────────────────────────────────── -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                </button>
+                <div class="top-bar-center">
+                    <div class="file-filter-wrapper" id="fileFilterWrapper" style="display:none">
+                        <label class="filter-label">Focus:</label>
+                        <select class="file-filter-select" id="fileFilter">
+                            <option value="">All Documents</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="top-bar-right">
+                    <div class="chunk-badge" id="chunkBadge" style="display:none">
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.5" />
+                            <path d="M4 7h6M7 4v6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        </svg>
+                        <span id="chunkCount">0</span> chunks indexed
+                    </div>
+                    <div class="powered-badge">
+                        <span class="powered-dot"></span>
+                        Geo Cherian Mathew
+                    </div>
+                </div>
+            </header>
+
+            <!-- Chat Area -->
+            <div class="chat-container" id="chatContainer">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-glow"></div>
+                    <div class="welcome-content">
+                        <div class="welcome-icon">
+                            <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect width="80" height="80" rx="20" fill="url(#welcome-grad)" />
+                                <path d="M40 16L56 25.6v19.2L40 54.4 24 44.8V25.6L40 16z" stroke="white"
+                                    stroke-width="2.5" fill="none" opacity="0.9" />
+                                <circle cx="40" cy="36" r="8" stroke="white" stroke-width="2.5" fill="none"
+                                    opacity="0.9" />
+                                <path d="M40 28v-5M47 32l4-2.5M47 40l4 2.5M40 44v5M33 40l-4 2.5M33 32l-4-2.5"
+                                    stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6" />
+                                <defs>
+                                    <linearGradient id="welcome-grad" x1="0" y1="0" x2="80" y2="80">
+                                        <stop stop-color="#6366f1" />
+                                        <stop offset="0.5" stop-color="#8b5cf6" />
+                                        <stop offset="1" stop-color="#a855f7" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+                        <h2 class="welcome-title">Welcome to <span class="gradient-text">Cortex AI</span></h2>
+                        <p class="welcome-desc">Enterprise-grade document intelligence. Upload, analyze, compare, and
+                            extract
+                            actionable insights from your files in seconds.</p>
+
+                        <div class="capability-cards">
+                            <div class="cap-card" data-query="Summarize this document with key findings">
+                                <div class="cap-icon">📋</div>
+                                <h4>Smart Analysis</h4>
+                                <p>Instant document analysis with key points extraction</p>
+                            </div>
+                            <div class="cap-card"
+                                data-query="Compare the two uploaded documents and highlight differences">
+                                <div class="cap-icon">🔍</div>
+                                <h4>Cross-Doc Compare</h4>
+                                <p>Find similarities, differences, and conflicts</p>
+                            </div>
+                            <div class="cap-card"
+                                data-query="Extract all dates, names, and values into a structured table">
+                                <div class="cap-icon">📊</div>
+                                <h4>Data Extraction</h4>
+                                <p>Structure unstructured data into organized tables</p>
+                            </div>
+                            <div class="cap-card" data-query="Calculate the total revenue mentioned in the documents">
+                                <div class="cap-icon">🧮</div>
+                                <h4>Smart Compute</h4>
+                                <p>Perform calculations on extracted document data</p>
+                            </div>
+                        </div>
+
+                        <div class="welcome-shortcuts">
+                            <span class="shortcut-hint"><kbd>Enter</kbd> to send</span>
+                            <span class="shortcut-hint"><kbd>Shift+Enter</kbd> new line</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="messages" id="messages" style="display:none"></div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea id="chatInput" placeholder="Ask about your documents..." rows="1" maxlength="2000"
+                            aria-label="Chat input"></textarea>
+                        <div class="input-actions">
+                            <span class="char-count" id="charCount">0/2000</span>
+                            <button class="send-btn" id="sendBtn" disabled aria-label="Send message">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                    <path d="M3 10l14-7-7 14v-7H3z" fill="currentColor" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="input-hint">Cortex AI — Created by Geo Cherian Mathew. Analyzes your documents with
+                        advanced LLM reasoning.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!--  SUMMARY MODAL                                                 -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="modal-overlay" id="summaryModal" style="display:none">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="summaryTitle">Document Summary</h3>
+                <button class="modal-close" id="closeSummaryModal" aria-label="Close modal">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" id="summaryContent">
+                <div class="summary-loading">
+                    <div class="pulse-loader"></div>
+                    <p>Generating intelligent summary...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js?v=4"></script>
+</body>
+
+</html>
