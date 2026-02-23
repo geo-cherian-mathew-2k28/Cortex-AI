@@ -38,10 +38,13 @@ pip install -r requirements.txt
 ```
 
 ### 2. 🔑 API Configuration
-Cortex AI requires a **Groq API Key** for its high-speed reasoning.
-1. Get your key at [Groq Console](https://console.groq.com).
-2. Rename `.env.example` to `.env`.
-3. Paste your key: `GROQ_API_KEY=gsk_...`
+Cortex AI requires two API keys for its high-speed reasoning and cloud deployment:
+1. **Groq API Key**: Get it at [Groq Console](https://console.groq.com).
+2. **HuggingFace Token**: Get a free one at [HuggingFace Settings](https://huggingface.co/settings/tokens).
+3. Rename `.env.example` to `.env`.
+4. Paste your keys:
+   - `GROQ_API_KEY=gsk_...`
+   - `HUGGINGFACE_TOKEN=hf_...`
 
 ### 3. 🚀 Launch
 Start the production-ready server:

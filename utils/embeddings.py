@@ -1,21 +1,26 @@
 """
-Lexi-Sense Embedding Engine
-Manages embedding generation and FAISS vector store with BM25 hybrid search.
+Cortex AI Embedding Engine (Vercel-Optimized)
+Lightweight hybrid search using API-based embeddings and Numpy.
+Removes dependency on Torch/Sentence-Transformers to fit Lambda limits.
+Created by Geo Cherian Mathew.
 """
 import numpy as np
+import os
+import requests
+import time
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, field
 import math
 import re
-from collections import Counter
 
-from backend.config import EMBEDDING_MODEL, EMBEDDING_DIMENSION, TOP_K_RESULTS, SEMANTIC_WEIGHT, KEYWORD_WEIGHT
+from backend.config import EMBEDDING_MODEL, TOP_K_RESULTS, SEMANTIC_WEIGHT, KEYWORD_WEIGHT, GROQ_API_KEY
 from utils.chunker import DocumentChunk
 
+# Constants
+HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{EMBEDDING_MODEL}"
 
 class BM25:
     """Simple BM25 implementation for keyword search."""
-
     def __init__(self, k1: float = 1.5, b: float = 0.75):
         self.k1 = k1
         self.b = b
@@ -33,8 +38,6 @@ class BM25:
         self.corpus_size = len(corpus)
         self.doc_lens = [len(doc) for doc in self.tokenized_corpus]
         self.avg_dl = sum(self.doc_lens) / max(self.corpus_size, 1)
-
-        # Calculate document frequencies
         self.doc_freqs = {}
         for doc in self.tokenized_corpus:
             unique_terms = set(doc)
@@ -44,133 +47,90 @@ class BM25:
     def score(self, query: str) -> List[float]:
         query_tokens = self._tokenize(query)
         scores = [0.0] * self.corpus_size
-
+        if self.corpus_size == 0: return scores
         for token in query_tokens:
-            if token not in self.doc_freqs:
-                continue
+            if token not in self.doc_freqs: continue
             df = self.doc_freqs[token]
             idf = math.log((self.corpus_size - df + 0.5) / (df + 0.5) + 1)
-
             for i, doc in enumerate(self.tokenized_corpus):
                 tf = doc.count(token)
                 dl = self.doc_lens[i]
                 numerator = tf * (self.k1 + 1)
                 denominator = tf + self.k1 * (1 - self.b + self.b * dl / self.avg_dl)
                 scores[i] += idf * (numerator / denominator)
-
         return scores
 
-
 class VectorStore:
-    """Manages FAISS index and BM25 for hybrid search over document chunks."""
-
+    """Session-based vector storage using Numpy for similarity."""
     def __init__(self):
-        self._model = None
-        self.index = None
+        self.embeddings: Optional[np.ndarray] = None
         self.chunks: List[DocumentChunk] = []
         self.bm25 = BM25()
         self._initialized = False
-
-    @property
-    def model(self):
-        if self._model is None:
-            from sentence_transformers import SentenceTransformer
-            self._model = SentenceTransformer(EMBEDDING_MODEL)
-        return self._model
-
-    def _create_index(self, dim: int):
-        import faiss as faiss_lib
-        return faiss_lib.IndexFlatIP(dim)
-
-
+        # Get HF token from environment
+        self.hf_token = os.getenv("HUGGINGFACE_TOKEN", "")
 
     def embed(self, texts: List[str]) -> np.ndarray:
-        """Generate embeddings for a list of texts."""
-        embeddings = self.model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
-        return np.array(embeddings, dtype="float32")
+        """Generate embeddings via HuggingFace Inference API or fallback."""
+        if not self.hf_token:
+            # Fallback to zero-embeddings if no token provided (avoids crash but search will be keyword-only)
+            # Standard model dimension for all-MiniLM-L6-v2 is 384
+            return np.zeros((len(texts), 384), dtype="float32")
+
+        headers = {"Authorization": f"Bearer {self.hf_token}"}
+        
+        # HuggingFace might need a few tries if the model is loading
+        for _ in range(3):
+            response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts, "options": {"wait_for_model": True}})
+            if response.status_code == 200:
+                return np.array(response.json(), dtype="float32")
+            elif response.status_code == 503: # Model loading
+                time.sleep(2)
+                continue
+            else:
+                break
+                
+        return np.zeros((len(texts), 384), dtype="float32")
 
     def add_chunks(self, chunks: List[DocumentChunk]):
-        """Add document chunks to the vector store."""
-        if not chunks:
-            return
-
+        if not chunks: return
         texts = [c.content for c in chunks]
-        embeddings = self.embed(texts)
-
-        if self.index is None:
-            self.index = self._create_index(embeddings.shape[1])
-
-        self.index.add(embeddings)
+        new_embeddings = self.embed(texts)
+        if self.embeddings is None:
+            self.embeddings = new_embeddings
+        else:
+            self.embeddings = np.vstack([self.embeddings, new_embeddings])
         self.chunks.extend(chunks)
-
-        # Rebuild BM25 index with all chunks
         all_texts = [c.content for c in self.chunks]
         self.bm25.fit(all_texts)
         self._initialized = True
 
-    def hybrid_search(
-        self,
-        query: str,
-        top_k: int = TOP_K_RESULTS,
-        semantic_weight: float = SEMANTIC_WEIGHT,
-        keyword_weight: float = KEYWORD_WEIGHT,
-        file_filter: Optional[str] = None,
-    ) -> List[Tuple[DocumentChunk, float]]:
-        """
-        Perform hybrid search combining FAISS semantic search and BM25 keyword search.
-        Returns list of (chunk, score) tuples sorted by combined score.
-        """
-        if not self._initialized or not self.chunks:
-            return []
-
+    def hybrid_search(self, query: str, top_k: int = TOP_K_RESULTS) -> List[Tuple[DocumentChunk, float]]:
+        if not self._initialized or not self.chunks: return []
         n = len(self.chunks)
-
-        # ── Semantic Scores ────────────────────────────────────────────
-        query_embedding = self.embed([query])
-        k = min(n, top_k * 3)  # retrieve more for re-ranking
-        distances, indices = self.index.search(query_embedding, k)
-
-        semantic_scores = np.zeros(n)
-        for dist, idx in zip(distances[0], indices[0]):
-            if idx < n:
-                semantic_scores[idx] = max(0, dist)  # cosine similarity
-
-        # Normalize semantic scores
+        
+        # ── Semantic Scores (Cosine Similarity via Numpy) ────────────────
+        query_emb = self.embed([query])[0]
+        # Dot product of normalized vectors
+        norm_query = query_emb / (np.linalg.norm(query_emb) + 1e-10)
+        norm_embeddings = self.embeddings / (np.linalg.norm(self.embeddings, axis=1, keepdims=True) + 1e-10)
+        semantic_scores = np.dot(norm_embeddings, norm_query)
+        
         s_max = semantic_scores.max()
-        if s_max > 0:
-            semantic_scores /= s_max
+        if s_max > 0: semantic_scores /= s_max
 
         # ── Keyword Scores ─────────────────────────────────────────────
         keyword_scores = np.array(self.bm25.score(query))
         k_max = keyword_scores.max()
-        if k_max > 0:
-            keyword_scores /= k_max
+        if k_max > 0: keyword_scores /= k_max
 
         # ── Combined ───────────────────────────────────────────────────
-        combined = semantic_weight * semantic_scores + keyword_weight * keyword_scores
-
-        # Apply file filter
-        if file_filter:
-            for i, chunk in enumerate(self.chunks):
-                if chunk.filename != file_filter:
-                    combined[i] = 0.0
-
+        combined = SEMANTIC_WEIGHT * semantic_scores + KEYWORD_WEIGHT * keyword_scores
         top_indices = np.argsort(combined)[::-1][:top_k]
-        results = [(self.chunks[i], float(combined[i])) for i in top_indices if combined[i] > 0]
-
-        return results
-
-    def get_files(self) -> List[str]:
-        """Get list of unique filenames in the store."""
-        return list(set(c.filename for c in self.chunks))
-
-    def get_file_chunks(self, filename: str) -> List[DocumentChunk]:
-        """Get all chunks for a specific file."""
-        return [c for c in self.chunks if c.filename == filename]
+        return [(self.chunks[i], float(combined[i])) for i in top_indices if combined[i] > 0]
 
     def clear(self):
-        """Clear all data from the store."""
-        self.index = None
+        self.embeddings = None
         self.chunks = []
         self.bm25 = BM25()
         self._initialized = False
