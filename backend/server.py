@@ -29,8 +29,8 @@ logger = logging.getLogger("lexi-sense")
 #  APP INITIALIZATION
 # ═══════════════════════════════════════════════════════════════════════
 app = FastAPI(
-    title="Lexi-Sense API",
-    description="Autonomous Document Intelligence Agent",
+    title="Cortex AI API",
+    description="Industry-Grade Multi-Modal Document Intelligence",
     version="1.0.0",
 )
 
@@ -101,7 +101,7 @@ async def root():
     index_path = FRONTEND_DIR / "index.html"
     if index_path.exists():
         return FileResponse(str(index_path))
-    return {"message": "Lexi-Sense API is running", "docs": "/docs"}
+    return {"message": "Cortex AI API is running", "docs": "/docs"}
 
 
 @app.get("/api/health")

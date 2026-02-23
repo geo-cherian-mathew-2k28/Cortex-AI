@@ -10,8 +10,13 @@ load_dotenv()
 
 # ── Paths ──────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
-UPLOAD_DIR = BASE_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
+# On Vercel, the filesystem is read-only except for /tmp
+if os.getenv("VERCEL"):
+    UPLOAD_DIR = Path("/tmp") / "uploads"
+else:
+    UPLOAD_DIR = BASE_DIR / "uploads"
+
+UPLOAD_DIR.mkdir(exist_ok=True, parents=True)
 
 # ── API Keys ───────────────────────────────────────────────────────────
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
