@@ -17,7 +17,9 @@ from backend.config import EMBEDDING_MODEL, TOP_K_RESULTS, SEMANTIC_WEIGHT, KEYW
 from utils.chunker import DocumentChunk
 
 # Constants
-HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{EMBEDDING_MODEL}"
+# Use the full model path for HuggingFace
+HF_MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
+HF_API_URL = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{HF_MODEL_ID}"
 
 class BM25:
     """Simple BM25 implementation for keyword search."""
@@ -31,6 +33,8 @@ class BM25:
         self.tokenized_corpus: List[List[str]] = []
 
     def _tokenize(self, text: str) -> List[str]:
+        # Handle empty/none
+        if not text: return []
         return re.findall(r'\w+', text.lower())
 
     def fit(self, corpus: List[str]):
@@ -47,7 +51,7 @@ class BM25:
     def score(self, query: str) -> List[float]:
         query_tokens = self._tokenize(query)
         scores = [0.0] * self.corpus_size
-        if self.corpus_size == 0: return scores
+        if self.corpus_size == 0 or not query_tokens: return scores
         for token in query_tokens:
             if token not in self.doc_freqs: continue
             df = self.doc_freqs[token]
@@ -67,30 +71,44 @@ class VectorStore:
         self.chunks: List[DocumentChunk] = []
         self.bm25 = BM25()
         self._initialized = False
-        # Get HF token from environment
+        # Get token from environment
         self.hf_token = os.getenv("HUGGINGFACE_TOKEN", "")
 
     def embed(self, texts: List[str]) -> np.ndarray:
         """Generate embeddings via HuggingFace Inference API or fallback."""
-        if not self.hf_token:
-            # Fallback to zero-embeddings if no token provided (avoids crash but search will be keyword-only)
-            # Standard model dimension for all-MiniLM-L6-v2 is 384
-            return np.zeros((len(texts), 384), dtype="float32")
+        # Standard model dimension for all-MiniLM-L6-v2 is 384
+        dim = 384
+        
+        if not self.hf_token or not texts:
+            return np.zeros((len(texts), dim), dtype="float32")
 
         headers = {"Authorization": f"Bearer {self.hf_token}"}
         
-        # HuggingFace might need a few tries if the model is loading
         for _ in range(3):
-            response = requests.post(HF_API_URL, headers=headers, json={"inputs": texts, "options": {"wait_for_model": True}})
-            if response.status_code == 200:
-                return np.array(response.json(), dtype="float32")
-            elif response.status_code == 503: # Model loading
-                time.sleep(2)
-                continue
-            else:
+            try:
+                response = requests.post(
+                    HF_API_URL, 
+                    headers=headers, 
+                    json={"inputs": texts, "options": {"wait_for_model": True}},
+                    timeout=8.0  # Keep it under Vercel's limit
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    # HF API returns a list of floats (for 1 item) or list of lists (for multiple)
+                    # We need to ensure we return a 2D array
+                    res = np.array(data, dtype="float32")
+                    if res.ndim == 1:
+                        res = res.reshape(1, -1)
+                    return res
+                elif response.status_code == 503: # Model loading
+                    time.sleep(1.5)
+                    continue
+                else:
+                    break
+            except Exception:
                 break
                 
-        return np.zeros((len(texts), 384), dtype="float32")
+        return np.zeros((len(texts), dim), dtype="float32")
 
     def add_chunks(self, chunks: List[DocumentChunk]):
         if not chunks: return

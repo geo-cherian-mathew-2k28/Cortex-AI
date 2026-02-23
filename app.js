@@ -190,6 +190,16 @@ function handleFileSelect(e) {
 }
 
 async function uploadFiles(fileList) {
+    // Vercel Hobby Plan has a 4.5MB payload limit for serverless functions
+    // We check the total size of files to avoid the 500 error
+    const totalSize = Array.from(fileList).reduce((acc, f) => acc + f.size, 0);
+    const limit = 4.5 * 1024 * 1024;
+
+    if (totalSize > limit) {
+        showNotification(`Total upload size (${(totalSize / (1024 * 1024)).toFixed(1)}MB) exceeds Vercel's 4.5MB limit. Please upload smaller files or one at a time.`, 'error');
+        return;
+    }
+
     const formData = new FormData();
     for (const file of fileList) {
         formData.append('files', file);

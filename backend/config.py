@@ -46,5 +46,5 @@ MAX_MEMORY_MESSAGES = 15
 SESSION_TIMEOUT_MINUTES = 60
 
 # ── File Limits ────────────────────────────────────────────────────────
-MAX_FILE_SIZE_MB = 25
+MAX_FILE_SIZE_MB = 4.5 if os.getenv("VERCEL") else 25
 # ALLOWED_EXTENSIONS removed – all file types are now handled by the universal parser
